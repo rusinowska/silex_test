@@ -33,3 +33,12 @@ services:
     # AppBundle\Service\ExampleService:
     #     arguments:
     #         $someArgument: 'some_value'
+
+    # app/config/services.yml
+    AppBundle\Repository\BookmarksRepository:
+        class: AppBundle\Repository\BookmarksRepository
+
+    # app/config/services.yml
+    AppBundle\Repository\TagsRepository:
+        factory: 'doctrine.orm.entity_manager:getRepository'
+        arguments: ['AppBundle\Entity\Tag']

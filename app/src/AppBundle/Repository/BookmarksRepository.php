@@ -1,15 +1,15 @@
 <?php
 /**
- * Bookmark repository.
+ * Bookmarks repository.
  */
 namespace AppBundle\Repository;
 
 /**
- * Class BooksmarkRepository.
+ * Class BookmarksRepository.
  *
  * @package AppBundle\Repository
  */
-class BookmarkRepository
+class BookmarksRepository
 {
     /**
      * Bookmarks array
