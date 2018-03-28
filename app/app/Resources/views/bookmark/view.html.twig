@@ -1,0 +1,32 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}
+    {{ 'title.bookmarks'|trans }}
+{% endblock %}
+
+{% block body %}
+
+    <h1>{{ 'title.bookmarks'|trans }}</h1>
+
+    {% if bookmark is defined and bookmark|length %}
+
+            <dl>
+                <dt>{{ 'label.id'|trans }}</dt>
+                <dt>{{ 'label.url'|trans }}</dt>
+                <dd>{{ bookmark.url }}</dd>
+                <dt>{%  for x in  bookmark.tags %}
+                        {{ x }},
+                    {% endfor %}
+                </dt>
+                <dt>{{ 'label.link'|trans }}</dt>
+                <dd><a href="{{ url('bookmark_index') }}"></a></dd>
+
+            </dl>
+
+    {% else %}
+        <p>
+            {{ 'message.empty_list'|trans }}
+        </p>
+    {% endif %}
+
+{% endblock %}
