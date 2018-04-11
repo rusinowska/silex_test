@@ -1,5 +1,7 @@
 <?php
-
+/**
+ * Tags repository.
+ */
 namespace AppBundle\Repository;
 
 use Doctrine\ORM\EntityRepository;

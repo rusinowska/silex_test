@@ -4,79 +4,202 @@
  */
 namespace AppBundle\Controller;
 
+use AppBundle\Entity\Bookmark;
+use AppBundle\Form\BookmarkType;
 use AppBundle\Repository\BookmarksRepository;
 use Sensio\Bundle\FrameworkExtraBundle\Configuration\Method;
 use Sensio\Bundle\FrameworkExtraBundle\Configuration\Route;
 use Symfony\Bundle\FrameworkBundle\Controller\Controller;
+use Symfony\Component\Form\Extension\Core\Type\FormType;
+use Symfony\Component\HttpFoundation\Request;
 
 /**
  * Class BookmarksController.
  *
- * @package AppBundle\Controller
- *
- * @Route("/bookmarks")
+ * @Route(
+ *     "/bookmarks"
+ * )
  */
 class BookmarksController extends Controller
 {
     /**
-     * Bookmarks repository.
+     * Bookmark repository.
      *
-     * @var \AppBundle\Repository\BookmarksRepository|null Bookmark repository
+     * @var \AppBundle\Repository\BookmarksRepository|null $bookmarksRepository
      */
     protected $bookmarksRepository = null;
 
     /**
      * BookmarksController constructor.
      *
-     * @param \AppBundle\Repository\BookmarksRepository $bookmarksRepository Bookmark repository
+     * @param \AppBundle\Repository\BookmarksRepository $bookmarksRepository Bookmarks repository
      */
     public function __construct(BookmarksRepository $bookmarksRepository)
     {
         $this->bookmarksRepository = $bookmarksRepository;
     }
 
-
     /**
      * Index action.
      *
-     * @Route(
-     *     "/",
-     *     name="bookmarks_index",
-     * )
-     * @Method("GET")
+     * @param integer $page Current page number
      *
      * @return \Symfony\Component\HttpFoundation\Response HTTP Response
+     *
+     * @Route(
+     *     "/",
+     *     defaults={"page": 1},
+     *     name="bookmarks_index",
+     * )
+     * @Route(
+     *     "/page/{page}",
+     *     requirements={"page": "[1-9]\d*"},
+     *     name="bookmarks_index_paginated",
+     * )
+     * @Method("GET")
      */
-    public function indexAction()
+    public function indexAction($page)
     {
-        $bookmarks = $this->bookmarksRepository->findAll();
+        $bookmarks = $this->bookmarksRepository->findAllPaginated($page);
 
         return $this->render(
             'bookmarks/index.html.twig',
             ['bookmarks' => $bookmarks]
         );
     }
+
     /**
      * View action.
-     *        class: AppBundle\Repository\BookmarksRepository
+     *
+     * @param Bookmark $bookmark Bookmark entity
+     *
+     * @return \Symfony\Component\HttpFoundation\Response HTTP Response
+     *
      * @Route(
      *     "/{id}",
-     *     requirements={"id"="\d+"},
+     *     requirements={"id": "[1-9]\d*"},
      *     name="bookmarks_view",
      * )
      * @Method("GET")
-     *
-     * @return \Symfony\Component\HttpFoundation\Response HTTP Response
      */
-    public function viewAction($id)
+    public function viewAction(Bookmark $bookmark)
     {
-        $bookmarksRepository = new BookmarksRepository();
-        $bookmark = $bookmarksRepository->findOneById($id);
-
         return $this->render(
             'bookmarks/view.html.twig',
             ['bookmark' => $bookmark]
         );
     }
 
+    /**
+     * Add action.
+     *
+     * @param \Symfony\Component\HttpFoundation\Request $request HTTP Request
+     *
+     * @return \Symfony\Component\HttpFoundation\RedirectResponse|\Symfony\Component\HttpFoundation\Response HTTP Response
+     *
+     * @throws \Doctrine\ORM\OptimisticLockException
+     *
+     * @Route(
+     *     "/add",
+     *     name="bookmarks_add",
+     * )
+     * @Method({"GET", "POST"})
+     */
+    public function addAction(Request $request)
+    {
+        $bookmark = new Bookmark();
+        $form = $this->createForm(BookmarkType::class, $bookmark);
+        $form->handleRequest($request);
+
+        if ($form->isSubmitted() && $form->isValid()) {
+            $this->bookmarksRepository->save($bookmark);
+            $this->addFlash('success', 'message.created_successfully');
+
+            return $this->redirectToRoute('bookmarks_index');
+        }
+
+        return $this->render(
+            'bookmarks/add.html.twig',
+            [
+                'bookmark' => $bookmark,
+                'form' => $form->createView(),
+            ]
+        );
+    }
+
+    /**
+     * Edit action.
+     *
+     * @param \Symfony\Component\HttpFoundation\Request $request HTTP Request
+     * @param \AppBundle\Entity\Bookmark                     $bookmark     Bookmark entity
+     *
+     * @return \Symfony\Component\HttpFoundation\RedirectResponse|\Symfony\Component\HttpFoundation\Response HTTP Response
+     *
+     * @throws \Doctrine\ORM\OptimisticLockException
+     *
+     * @Route(
+     *     "/{id}/edit",
+     *     requirements={"id": "[1-9]\d*"},
+     *     name="bookmarks_edit",
+     * )
+     * @Method({"GET", "POST"})
+     */
+    public function editAction(Request $request, Bookmark $bookmark)
+    {
+        $form = $this->createForm(BookmarkType::class, $bookmark);
+        $form->handleRequest($request);
+
+        if ($form->isSubmitted() && $form->isValid()) {
+            $this->bookmarksRepository->save($bookmark);
+            $this->addFlash('success', 'message.modified_successfully');
+
+            return $this->redirectToRoute('bookmarks_index');
+        }
+
+        return $this->render(
+            'bookmarks/edit.html.twig',
+            [
+                'bookmark' => $bookmark,
+                'form' => $form->createView(),
+            ]
+        );
+    }
+
+    /**
+     * Delete action.
+     *
+     * @param \Symfony\Component\HttpFoundation\Request $request HTTP Request
+     * @param \AppBundle\Entity\Bookmark   $bookmark     Bookmark    entity
+     *
+     * @return \Symfony\Component\HttpFoundation\RedirectResponse|\Symfony\Component\HttpFoundation\Response HTTP Response
+     *
+     * @throws \Doctrine\ORM\OptimisticLockException
+     *
+     * @Route(
+     *     "/{id}/delete",
+     *     requirements={"id": "[1-9]\d*"},
+     *     name="bookmarks_delete",
+     * )
+     * @Method({"GET", "POST"})
+     */
+    public function deleteAction(Request $request, Bookmark $bookmark)
+    {
+        $form = $this->createForm(FormType::class, $bookmark);
+        $form->handleRequest($request);
+
+        if ($form->isSubmitted() && $form->isValid()) {
+            $this->bookmarksRepository->delete($bookmark);
+            $this->addFlash('success', 'message.deleted_successfully');
+
+            return $this->redirectToRoute('bookmarks_index');
+        }
+
+        return $this->render(
+            'bookmarks/delete.html.twig',
+            [
+                'bookmark' => $bookmark,
+                'form' => $form->createView(),
+            ]
+        );
+    }
 }
